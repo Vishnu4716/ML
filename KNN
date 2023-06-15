@@ -1,1 +1,72 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df=pd.read_csv('Fertilizer Prediction.csv')
+
+df
+
+col=df.columns
+
+col
+
+df.isnull().sum()
+
+df['Soil Type'].value_counts()
+
+df['Soil Type']=df['Soil Type'].map({'Loamy':0,'Sandy':1,'Clayey':2,'Black':3,'Red':4})
+
+df['Crop Type'].value_counts()
+
+map2={'Sugarcane':0,'Cotton':1, 'Millets':2, 'Paddy':3, 'Pulses':4, 'Wheat':5, 'Tobacco':6, 'Barley':7,'Oil seeds':8,'Ground Nuts':9, 'Maize':10 }
+df['Crop Type']=df['Crop Type'].map(map2)
+
+df['Fertilizer Name'].value_counts()
+
+df['Fertilizer Name']=df['Fertilizer Name'].map({'Urea':0,'DAP':1,'28-28':2,'14-35-14':3,'20-20':4,'17-17-17':5,'10-26-26':6})
+
+df
+
+df.corr()['Fertilizer Name']
+
+sns.heatmap(df.corr(),annot=True)
+plt.show()
+
+df.drop(['Temparature'],axis=1,inplace=True)
+
+df.drop(['Humidity '],axis=1,inplace=True)
+
+y=df['Fertilizer Name']
+
+X=df.drop(['Fertilizer Name'],axis=1)
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.9, random_state=42)
+
+X_train
+y_train
+
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
+from sklearn.neighbors import KNeighborsClassifier
+classifier=KNeighborsClassifier(n_neighbors=3,metric='minkowski',p=2)
+classifier.fit(X_train, y_train)
+
+#Predicting the test set result  
+y_pred= classifier.predict(X_test)
+acc = accuracy_score(y_test, y_pred)
+print("accuracy", acc)
+prec=precision_score(y_test, y_pred,average='micro')
+print("precision",prec)
+rec=recall_score(y_test, y_pred,average='macro')
+print("recall",rec)
+f1=f1_score(y_test, y_pred,average='weighted')
+print("f1 score",rec)
+recall_sensitivity = metrics.recall_score(y_test, y_pred,average='micro')
+recall_specificity = metrics.recall_score(y_test, y_pred,average='macro')
+print("Sensitivity",recall_sensitivity)
+print("Specificity",recall_specificity)
 
