@@ -1,1 +1,204 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
+df = pd.read_csv('spam.csv')
+
+df.head()
+
+df.shape
+
+df.info()
+
+duplicate=df[df.duplicated()] 
+duplicate
+
+df.drop_duplicates(inplace=True)
+
+duplicate = df[df.duplicated()] 
+duplicate
+
+df.describe(include='object')
+
+df.isnull().sum()
+
+# Expanding contractions
+
+# Dictionary of English Contractions
+contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
+                     "can't": "cannot","can't've": "cannot have",
+                     "'cause": "because","could've": "could have","couldn't": "could not",
+                     "couldn't've": "could not have", "didn't": "did not","doesn't": "does not",
+                     "don't": "do not","hadn't": "had not","hadn't've": "had not have",
+                     "hasn't": "has not","haven't": "have not","he'd": "he would",
+                     "he'd've": "he would have","he'll": "he will", "he'll've": "he will have",
+                     "how'd": "how did","how'd'y": "how do you","how'll": "how will",
+                     "I'd": "I would", "I'd've": "I would have","I'll": "I will",
+                     "I'll've": "I will have","I'm": "I am","I've": "I have", "isn't": "is not",
+                     "it'd": "it would","it'd've": "it would have","it'll": "it will",
+                     "it'll've": "it will have", "let's": "let us","ma'am": "madam",
+                     "mayn't": "may not","might've": "might have","mightn't": "might not", 
+                     "mightn't've": "might not have","must've": "must have","mustn't": "must not",
+                     "mustn't've": "must not have", "needn't": "need not",
+                     "needn't've": "need not have","o'clock": "of the clock","oughtn't": "ought not",
+                     "oughtn't've": "ought not have","shan't": "shall not","sha'n't": "shall not",
+                     "shan't've": "shall not have","she'd": "she would","she'd've": "she would have",
+                     "she'll": "she will", "she'll've": "she will have","should've": "should have",
+                     "shouldn't": "should not", "shouldn't've": "should not have","so've": "so have",
+                     "that'd": "that would","that'd've": "that would have", "there'd": "there would",
+                     "there'd've": "there would have", "they'd": "they would",
+                     "they'd've": "they would have","they'll": "they will",
+                     "they'll've": "they will have", "they're": "they are","they've": "they have",
+                     "to've": "to have","wasn't": "was not","we'd": "we would",
+                     "we'd've": "we would have","we'll": "we will","we'll've": "we will have",
+                     "we're": "we are","we've": "we have", "weren't": "were not","what'll": "what will",
+                     "what'll've": "what will have","what're": "what are", "what've": "what have",
+                     "when've": "when have","where'd": "where did", "where've": "where have",
+                     "who'll": "who will","who'll've": "who will have","who've": "who have",
+                     "why've": "why have","will've": "will have","won't": "will not",
+                     "won't've": "will not have", "would've": "would have","wouldn't": "would not",
+                     "wouldn't've": "would not have","y'all": "you all", "y'all'd": "you all would",
+                     "y'all'd've": "you all would have","y'all're": "you all are",
+                     "y'all've": "you all have", "you'd": "you would","you'd've": "you would have",
+                     "you'll": "you will","you'll've": "you will have", "you're": "you are",
+                     "you've": "you have"}
+
+# Regular expression for finding contractions
+contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()))
+
+# Function for expanding contractions
+def expand_contractions(text,contractions_dict=contractions_dict):
+    def replace(match):
+        return contractions_dict[match.group(0)]
+    return contractions_re.sub(replace, text)
+
+# Expanding Contractions in the reviews
+df['Message'] = df['Message'].apply(lambda x:expand_contractions(x))
+
+
+
+# Removing digits and words containing digits
+
+df['Message'] = df['Message'].apply(lambda x: re.sub('\w*\d\w*','', x))
+
+# Removing punctuations
+
+df['Message'] = df['Message'].apply(lambda x: re.sub(r'[^\w\s]', '', x))
+
+# Removing extra spaces
+
+df['Message']=df['Message'].apply(lambda x: re.sub(' +',' ',x))
+
+# Displaying the text after cleaning
+
+for index,text in enumerate(df['Message'][0:3]):
+    print('Review %d:\n'%(index+1), text)
+    
+  
+  import nltk
+from nltk.corpus import stopwords
+w_tokenizer = nltk.tokenize.WhitespaceTokenizer()
+lemmatizer = nltk.stem.WordNetLemmatizer()
+
+def lemmatize_text(text):
+    rev = [lemmatizer.lemmatize(w) for w in w_tokenizer.tokenize(text) if w not in stopwords.words('english')]
+    rev = ' '.join(rev)
+    return rev
+
+df['Message'] = df.Message.apply(lemmatize_text)
+
+
+df_ham = df[df.Category == 'ham']
+
+text_ham = " ".join(text for text in df_ham['Message'])
+
+
+# Creating text variable for spam
+
+df_spam = df[df.Category == 'spam']
+
+text_spam = " ".join(text for text in df_spam['Message'])
+
+
+# Creating wordcloud for ham
+from wordcloud import WordCloud
+ham_cloud = WordCloud(collocations = False, background_color = 'white').generate(text_ham)
+plt.imshow(ham_cloud, interpolation='bilinear')
+plt.axis("off")
+plt.show()
+
+
+# Creating wordcloud for spam
+
+spam_cloud = WordCloud(collocations = False, background_color = 'white').generate(text_spam)
+plt.imshow(spam_cloud, interpolation='bilinear')
+plt.axis("off")
+plt.show()
+
+cv = CountVectorizer()
+X = cv.fit_transform(df['Message']).toarray()
+
+le = LabelEncoder()
+df["Category"] = le.fit_transform(df["Category"])
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, random_state=42)
+
+print("X_train:", X_train.shape)
+print("X_test:", X_test.shape)
+print("y_train:", y_train.shape)
+print("y_test:", y_test.shape)
+
+# Training the model using Naive Bayes classifier
+
+nb = MultinomialNB().fit(X_train, y_train)
+
+print("Score of train data:", nb.score(X_train, y_train))
+print("Score of test data:", nb.score(X_test, y_test))
+
+y_pred = nb.predict(X_test)
+y_pred
+
+f1_score = f1_score(y_test, y_pred, average='weighted')
+accuracy = accuracy_score(y_test, y_pred)
+
+print("F1 Score:", f1_score)
+print("Accuracy Score:", accuracy)
+
+print(classification_report(y_test, y_pred))
+
+cm = confusion_matrix(y_test, y_pred)
+
+group_names = ['True Neg', 'False Pos', 'False Neg', 'True Pos']
+group_counts = ["{0:0.0f}".format(value) for value in
+                cm.flatten()]
+group_percentages = ["{0:.2%}".format(value) for value in
+                     cm.flatten()/np.sum(cm)]
+labels = [f"{v1}\n{v2}\n{v3}" for v1, v2, v3 in
+          zip(group_names,group_counts,group_percentages)]
+labels = np.asarray(labels).reshape(2,2)
+sns.heatmap(cm, annot=labels, fmt='', cmap='Dark2')
+
+        accuracy = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred)
+        recall = recall_score(y_test, y_pred)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+        specificity = tn / (tn + fp)
+        sensitivity = tp / (tp + fn)
+        serendipity = 1 - (specificity + sensitivity) / 2
+
+result = {
+        'Accuracy': accuracy,
+        'Precision': precision,
+        'Recall': recall,
+        'F1-Score': f1,
+        'Specificity': specificity,
+        'Sensitivity': sensitivity,
+        'Serendipity': serendipity,
+        'Training Time': training_time,
+        'Testing Time': testing_time
+    }
+
+Frame = pd.DataFrame(result,index=[0])
+
+Frame
